@@ -2,7 +2,8 @@ import sqlite3
 from random import sample
 from youtube_transcript_api import YouTubeTranscriptApi
 import pafy
-
+from keras.preprocessing.text import Tokenizer
+import re
 import traceback
 
 def findBestSegments(cursor_src, vid, verbose = False):
@@ -11,7 +12,8 @@ def findBestSegments(cursor_src, vid, verbose = False):
     sponsors = []
     for i in cursor_src.fetchall():
         sponsors.append((i[1],i[2],i[3]))
-
+    
+    #Ported algorithm originally written by Ajay for his SponsorBlock project
     #Find sponsors that are overlapping
     similar = []
     for i in sponsors:
@@ -36,7 +38,7 @@ def findBestSegments(cursor_src, vid, verbose = False):
             print(best)
     return best
 
-def appendSponsor(conn_src, conn_dest, vid, verbose = False):
+def extractSponsor(conn_src, conn_dest, vid, verbose = False):
     try:
         cursor_dest = conn_dest.cursor()
         count = cursor_dest.execute(f"select count(*) from sponsordata where videoid = '{vid}'").fetchone()[0]
@@ -75,7 +77,7 @@ def appendSponsor(conn_src, conn_dest, vid, verbose = False):
         conn_dest.commit()
         return
 
-def appendRandom(conn_dest, verbose = False):
+def extractRandom(conn_dest, verbose = False):
     cursor_dest = conn_dest.cursor()
     cursor_dest.execute(f"select endtime - starttime from sponsordata where processed = 1")
     segment_lengths = cursor_dest.fetchall()
@@ -144,6 +146,56 @@ def appendRandom(conn_dest, verbose = False):
         cnt += 1
     return 
 
+def labelVideo(conn_dest, vid, verbose = False):
+    
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(vid, languages=["en"])
+    
+        cursor = conn_dest.cursor()
+        #we can use the labeled data computed previously to extract the information we need
+        cursor.execute(f"select starttime, endtime, text from sponsordata where processed = 1 and videoid = '{vid}'")
+        results = cursor.fetchall()
+        
+        #Stitch together the transcript into a single string
+        #Use the tokenized string to label each word as sponsor or not
+        fuzziness = 0.15
+        seq = []
+        full_text = ""
+        for t in transcript:
+            #Use tokenizer to be consistent with training method
+            tokenizer = Tokenizer()
+            raw_text = t["text"].replace("\n"," ")
+            raw_text = re.sub(" +", " ", raw_text.replace(r"\u200b", " ")) #strip out this unicode
+            full_text += raw_text + " "
+            tokenizer.fit_on_texts([raw_text])
+            text = tokenizer.texts_to_sequences([raw_text])
+            inSponsor = False
+            for r in results:
+                if (r[0] - fuzziness) <= t["start"] <= (r[1] + fuzziness):
+                    inSponsor = True
+            
+            if inSponsor:
+                seq += [1] * len(text[0])
+                if verbose:
+                    print(raw_text)
+            else: 
+                seq += [0] * len(text[0])
+        full_text = re.sub(" +", " ", full_text).replace("'", "''") #format text
+        
+        #insert text and labels into db
+        cursor.execute(f"insert into SponsorStream values ('{vid}', '{full_text}' , '{seq}')")
+        conn_dest.commit()
+        
+    except:
+        #print(traceback.print_exc())
+        print(f"{vid} failed to get subtitles.")
+    return 
+
+########
+#Warning: Do not run this whole script at once. Each part was built independently
+#and was run at different points in time. Specifically, the labelVideo() function
+#pulls from sponsordata to create its own data.
+    
 try:
     conn_src = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\database.db")
     conn_dest = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
@@ -152,19 +204,37 @@ try:
     cursor_src.execute("select distinct videoid from sponsortimes where votes > 1")
     videoList = cursor_src.fetchall()
     
+    #Extracts the text for a sponsor segment and labels it 1 (sponsor)
     i = 0
     for vid in videoList:
         i += 1
         if i % 500 == 0:
             print("Video ({}) {} of {}".format(vid[0], i,len(videoList)))
-            appendSponsor(conn_src, conn_dest, vid[0], verbose = True)
+            extractSponsor(conn_src, conn_dest, vid[0], verbose = True)
         else:
-            appendSponsor(conn_src, conn_dest, vid[0])
+            extractSponsor(conn_src, conn_dest, vid[0])
     
-    #Part of the reason this is done separately is because 1) I wrote this
-    #piece afterwards, and 2) it makes it possible to sample from the entire
-    #distribution of segment lengths.
-    appendRandom(conn_dest, verbose = True)
+    # Part of the reason this is done separately is because 1) I wrote this
+    # piece afterwards, and 2) it makes it possible to sample from the entire
+    # distribution of segment lengths.
+    extractRandom(conn_dest, verbose = True)
+    
+    
+    ##################################################################
+    
+    #Labels the sponsored segments for the whole video. It uses some of the 
+    #data computed above to save time mainly.
+    cur = conn_dest.cursor()
+    cur.execute("select distinct videoid from sponsordata where processed = 1")
+    videoList = cur.fetchall()
+    i = 0
+    for vid in videoList:
+        i+=1
+        if i % 500 == 0:
+            print("Video ({}) {} of {}".format(vid[0], i,len(videoList)))
+            labelVideo(conn_dest, vid[0], verbose = True)
+        else:
+            labelVideo(conn_dest, vid[0])
             
 except:
     traceback.print_exc()
