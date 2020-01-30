@@ -48,6 +48,21 @@ def createRandom():
     conn.close()
     return
 
+def createStream():
+    conn = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
+    cursor = conn.cursor()
+    query = """
+    CREATE TABLE "SponsorStream" (
+            "videoID"       TEXT NOT NULL,
+            "text" BLOB,
+            "sponsorLabel" BLOB
+    )
+    """
+    cursor.execute(query)
+    conn.commit()
+    conn.close()
+    return
+
 def truncateTable(table):
     conn = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
     cursor = conn.cursor()
@@ -60,3 +75,5 @@ def truncateTable(table):
 
 #truncateTable("sponsordata")
 #truncateTable("randomdata")
+#createStream()
+truncateTable("sponsorstream")
