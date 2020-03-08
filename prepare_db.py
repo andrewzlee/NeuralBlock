@@ -73,7 +73,9 @@ def truncateTable(table):
     return
 
 
-#truncateTable("sponsordata")
-#truncateTable("randomdata")
-#createStream()
+truncateTable("sponsordata")
+truncateTable("randomdata")
 truncateTable("sponsorstream")
+#createSponsor()
+#createRandom()
+#createStream()
