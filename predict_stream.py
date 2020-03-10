@@ -10,7 +10,7 @@ with open("./data/tokenizer_stream_10k.json") as f:
     json_obj = json.load(f)
     tokenizer = tokenizer_from_json(json_obj)
 
-vid = "JbdGVtj4whA"
+vid = "5hjqXaez7ac"
 
 transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
 
@@ -31,5 +31,6 @@ if seqlen <= maxseqlen:
     results = model.predict(full_seq, batch_size = 1).round(3)
     df = pd.DataFrame(results[0,:,:])
     df["text"] = full_text
+    #df.to_csv("./examples/MinuteEarth_vgRDaemJA1o.csv")
 else:
     print("Video needs to be 3000 words or fewer.")
