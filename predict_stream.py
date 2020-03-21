@@ -26,7 +26,7 @@ print("Sequence length: {}".format(seqlen))
 maxseqlen = 3000
 if seqlen <= maxseqlen:
     print(full_text)
-    full_seq = pad_sequences(full_seq, maxlen = 3000, padding = "post")
+    full_seq = pad_sequences(full_seq, maxlen = maxseqlen, padding = "post")
     full_text = tokenizer.sequences_to_texts(full_seq)[0].split(" ")
     results = model.predict(full_seq, batch_size = 1).round(3)
     df = pd.DataFrame(results[0,:,:])

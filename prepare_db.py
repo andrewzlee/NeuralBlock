@@ -15,7 +15,7 @@ CREATE TABLE "sponsorTimes" (
 """
 
 def createSponsor():
-    conn = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
+    conn = sqlite3.connect("data/labeled.db")
     cursor = conn.cursor()
     query = """
     CREATE TABLE "SponsorData" (
@@ -33,7 +33,7 @@ def createSponsor():
     return
 
 def createRandom():
-    conn = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
+    conn = sqlite3.connect("data\labeled.db")
     cursor = conn.cursor()
     query2 = """
     CREATE TABLE "RandomData" (
@@ -49,7 +49,7 @@ def createRandom():
     return
 
 def createStream():
-    conn = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
+    conn = sqlite3.connect("data/labeled.db")
     cursor = conn.cursor()
     query = """
     CREATE TABLE "SponsorStream" (
@@ -64,7 +64,7 @@ def createStream():
     return
 
 def truncateTable(table):
-    conn = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
+    conn = sqlite3.connect("data/labeled.db")
     cursor = conn.cursor()
     cursor.execute(f"delete from {table}")
     conn.commit()
