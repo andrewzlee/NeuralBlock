@@ -1,0 +1,31 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+	<title>NeuralBlock</title>
+	Welcome to the NeuralBlock project page!
+</head>
+
+<body>
+	<p>
+		<a href="/">Return</a>
+		<br>
+		Transcript for {{ videoid }}:
+		<br>
+		<br>
+		{{ transcript_text }}
+		<br>
+		<br>
+		Predicted timestamps:
+		<br>
+		{{ timestamp }}
+		<br>
+		<br>
+		{% for para in sponsTexts %}
+			<p>Sponsorship:: {{para}}</p>
+		{% endfor %}
+	</p>
+</body>
+</html>

@@ -12,6 +12,16 @@ Some examples of NB's predictions are provided in the `examples/` directory.
 4. The sequence of text is tokenized using the top 10,000 words found in sponsorships. A word embedding using [fastText](https://fasttext.cc/) is generated.
 5. Finally, a bidirectional LSTM RNN is trained. The network outputs, at every word, a probability whether or not this word is part of a sponsorship.
 
+##Using the Web App
+The `app/` directory contains a simple flask application that performs the primary functions of `predict_stream.py` and `predict_timestamps.py`, and presents the results in the broswer.
+
+1. Install flask and other necessary libraries.
+2. Run `python app.py` from a terminal.
+3. Go to `localhost:5000` in a broswer.
+4. Submit a valid video ID and click Submit
+
+The results should return in a few seconds. Note, if a good transcript cannot be extracted by YouTubeTranscriptApi, the app will fail.
+
 ## Predicting On New Data
 1. Install the python libraries tensorflow and YouTubeTranscriptApi
 2. Update paths if necessary

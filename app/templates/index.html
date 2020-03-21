@@ -1,0 +1,23 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+	<title>NeuralBlock</title>
+	Welcome to the NeuralBlock project page!
+</head>
+
+<body>
+	<p>
+	Submit a video id and see where the sponsorships are. 
+	</p>
+	<p>
+	<form action="{{ url_for('predict') }}" method="post">
+		<label for="vid">Video ID:</label>
+		<input type="text" id="vid" name="vid"><br><br>
+		<input type="submit" value="Submit">
+	</form>
+	</p>
+</body>
+</html>
