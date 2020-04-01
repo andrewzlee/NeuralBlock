@@ -12,8 +12,8 @@ import re
 
 app = Flask(__name__)
 
-model = load_model("../data/models/nb_stream_fasttext_10k.h5")
-with open("../data/tokenizer_stream_10k.json") as f:
+model = load_model("./models/nb_stream_fasttext_10k.h5")
+with open("./models/tokenizer_stream_10k.json") as f:
     json_obj = json.load(f)
     tokenizer = tokenizer_from_json(json_obj)
 
@@ -37,9 +37,15 @@ def predict():
     full_text = full_text.strip()
     predictions = getPredictions(full_text)
     sponsorTimestamps,sponsorText = getTimestamps(transcript, captionCount, predictions[0], full_text.split(" "))
+    minuteStamps = []
+    for t in sponsorTimestamps:
+        m1,s1 = divmod(round(t[0]),60)
+        m2,s2 = divmod(round(t[1]),60)
+        minuteStamps.append(f"({m1}:{str(s1).zfill(2)},{m2}:{str(s2).zfill(2)})")
     
     return render_template("predict.html", videoid = vid, transcript_text = full_text, 
                            timestamp = " ".join(str(e) for e in sponsorTimestamps),
+                           minutestamp = " ".join(minuteStamps),
                            sponsTexts = sponsorText)
 
 def getPredictions(text):
@@ -58,15 +64,30 @@ def getPredictions(text):
 def getTimestamps(transcript, captionCount, predictions, words):
     sponsorSegments = []
     startIdx = 0
+    #Minimum confidence to start Sponsor
+    thresh = 0.60
     sFlag = 0
-    thresh = 0.55
+    #Sponsor confidence must exceed this value at some pont
+    confidence = 0.80 
+    sFlagConf = 0 
+
     for index,row in enumerate(predictions):
         if row[1] >= thresh and not sFlag:
             startIdx = index
             sFlag = 1
+            continue
+
+        if sFlag and row[1] >= confidence:
+            sFlagConf = 1
+
         if row[1] < thresh and sFlag:
-            sponsorSegments.append((startIdx,index))
+            if sFlagConf and (index-startIdx)>5: #Exclude segments with <= 5 words.
+                sponsorSegments.append((startIdx,index))
+            else:
+                print(f"The segment ({startIdx},{index}) was tossed.")
+            #Reset flags
             sFlag = 0
+            sFlagConf = 0
             
     sponsorTimestamps = []
     sponsorText = []
