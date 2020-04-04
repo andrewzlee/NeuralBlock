@@ -24,18 +24,14 @@ def predict():
     vid = request.form["vid"]
 
     transcript, full_text, captionCount = pp.processVideo(vid)
-    predictions, status = pp.getPredictions(model,tokenizer,full_text)
-    if status:
-        sponsorTimestamps,sponsorText = pp.getTimestamps(transcript, captionCount, predictions[0], full_text.split(" "), 1)
-        minuteStamps = []
-        for t in sponsorTimestamps:
-            m1,s1 = divmod(round(t[0]),60)
-            m2,s2 = divmod(round(t[1]),60)
-            minuteStamps.append(f"({m1}:{str(s1).zfill(2)},{m2}:{str(s2).zfill(2)})")
-    else:
-        sponsorTimestamps = []
-        sponsorText = []
-        minuteStamps = []
+    predictions = pp.getPredictions(model,tokenizer,full_text)
+
+    sponsorTimestamps,sponsorText = pp.getTimestamps(transcript, captionCount, predictions, full_text.split(" "), 1)
+    minuteStamps = []
+    for t in sponsorTimestamps:
+        m1,s1 = divmod(round(t[0]),60)
+        m2,s2 = divmod(round(t[1]),60)
+        minuteStamps.append(f"({m1}:{str(s1).zfill(2)},{m2}:{str(s2).zfill(2)})")
 
     return render_template("predict.html", videoid = vid, transcript_text = full_text,
                            timestamp = " ".join(str(e) for e in sponsorTimestamps),
@@ -46,8 +42,8 @@ def predict():
 def getSponsorSegments():
     vid = request.args["vid"]
     transcript, full_text, captionCount = pp.processVideo(vid)
-    predictions, status = pp.getPredictions(model,tokenizer,full_text)
-    sponsorTimestamps = pp.getTimestamps(transcript, captionCount, predictions[0], full_text.split(" "))
+    predictions = pp.getPredictions(model,tokenizer,full_text)
+    sponsorTimestamps = pp.getTimestamps(transcript, captionCount, predictions, full_text.split(" "))
     return jsonify(sponsorSegments=sponsorTimestamps)
 
 if __name__ == "__main__":

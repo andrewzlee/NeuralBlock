@@ -1,6 +1,7 @@
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
+import numpy as np
 
 def processVideo(vid):
     #Reliance on YouTubeTranscriptApi will eventually be eliminated
@@ -19,16 +20,59 @@ def processVideo(vid):
 
 def getPredictions(model,tokenizer,text):
     full_seq = tokenizer.texts_to_sequences([text])
-    seqlen = len(full_seq[0])
-    print("Sequence length: {}".format(seqlen))
+    numWords = len(full_seq[0])
+    print("Sequence length: {}".format(numWords))
     #Videos with more than 3000 words need to be split up.
-    maxseqlen = 3000
-    if seqlen <= maxseqlen:
-        full_seq = pad_sequences(full_seq, maxlen = maxseqlen, padding = "post")
-        return model.predict(full_seq, batch_size = 1).round(3) , 1
+    maxNumWords = 3000
+    if numWords <= maxNumWords:
+        full_seq = pad_sequences(full_seq, maxlen = maxNumWords, padding = "post")
+        return model.predict(full_seq, batch_size = 1).round(3)[0]
     else:
-        print("Video needs to be 3000 words or fewer.")
-    return [], 0
+        #Long videos will be split up with a small overlap
+        overlap = 500
+        full_seq = splitSeq(full_seq[0], numWords, maxNumWords, overlap)
+        full_seq = pad_sequences(full_seq, maxlen = maxNumWords, padding = "post")
+        prediction = model.predict(full_seq, batch_size = len(full_seq)).round(3)
+
+        #Stitch the split predictions back together
+        full_prediction = np.empty([0,2], dtype = np.float32)
+        overlapTail = np.empty([0,2], dtype = np.float32)
+
+        #Iterate through the splits
+        for i in prediction:
+            overlapRegion = np.empty([0,2], dtype = np.float32) 
+            #First n words in the split, which overlaps with the last n words of the previous split
+            overlapHead = i[0:overlap] 
+
+            for j in range(len(overlapTail)): #First split is skipped because len = 0
+                maxValue = max(overlapHead[j][1],overlapTail[j][1]) #Should be the same numbers, but grabbing max just in case
+                np.append(overlapRegion,(1-maxValue, maxValue))
+
+            full_prediction = np.concatenate((full_prediction,i[:-overlap],overlapRegion))
+            overlapTail = i[(maxNumWords-overlap):] #Extract tail n words for next iteration    
+        
+        return full_prediction
+
+def splitSeq(seq, numWords, maxNumWords, overlap):
+    X_trimmed = []
+    X_trimmed.append(seq[0:maxNumWords]) #First case
+
+    i = 1
+    startPos = (maxNumWords-overlap)*i
+    endPos = startPos + maxNumWords
+
+    #Split until the end
+    while endPos < numWords:
+        X_trimmed.append(seq[startPos:endPos])
+        #Update parameters
+        i += 1
+        startPos = (maxNumWords-overlap)*i
+        endPos = startPos + maxNumWords
+
+    #Last chunk
+    X_trimmed.append(seq[startPos:numWords])
+
+    return X_trimmed
 
 def getTimestamps(transcript, captionCount, predictions, words, returnText = 0):
     sponsorSegments = []
