@@ -1,4 +1,21 @@
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+from youtube_transcript_api import YouTubeTranscriptApi
+import re
+
+def processVideo(vid):
+    #Reliance on YouTubeTranscriptApi will eventually be eliminated
+    transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
+
+    chars = "(!|\"|#|\$|%|&|\(|\)|\*|\+|,|-|\.|/|:|;\<|=|>|\?|@|\[|\\\\|\]|\^|_|`|\{|\||\}|~|\t|\n)+"
+    captionCount = []
+    fullText = ""
+    for t in transcript:
+        cleaned_text = re.sub("  +", " ", re.sub(chars, " ", t["text"])).strip()
+        captionCount.append(len(cleaned_text.split(" "))) #num words in the caption
+        fullText = fullText + " " + cleaned_text
+    fullText = fullText.strip()
+
+    return transcript, fullText, captionCount
 
 def getPredictions(model,tokenizer,text):
     full_seq = tokenizer.texts_to_sequences([text])
@@ -13,15 +30,15 @@ def getPredictions(model,tokenizer,text):
         print("Video needs to be 3000 words or fewer.")
     return [], 0
 
-def getTimestamps(transcript, captionCount, predictions, words):
+def getTimestamps(transcript, captionCount, predictions, words, returnText = 0):
     sponsorSegments = []
     startIdx = 0
     #Minimum confidence to start Sponsor
     thresh = 0.60
     sFlag = 0
     #Sponsor confidence must exceed this value at some pont
-    confidence = 0.80 
-    sFlagConf = 0 
+    confidence = 0.80
+    sFlagConf = 0
 
     for index,row in enumerate(predictions):
         if row[1] >= thresh and not sFlag:
@@ -40,30 +57,36 @@ def getTimestamps(transcript, captionCount, predictions, words):
             #Reset flags
             sFlag = 0
             sFlagConf = 0
-            
+
     sponsorTimestamps = []
     sponsorText = []
     sFlag = 0
     wpm = 3
     for segs in sponsorSegments:
-        sponsorText.append(" ".join(words[segs[0]:segs[1]]))
+        if returnText:
+            sponsorText.append(" ".join(words[segs[0]:segs[1]]))
+
         numWords = 0
         for idx, e in enumerate(captionCount):
             if numWords <= segs[0] <= numWords+e and not sFlag:
                 excessHead = max(segs[0] - numWords - 1, 0) #every word before the starting word
                 startIdx = idx
                 sFlag = 1
-            
+
             numWords += e
-            
+
             if numWords >= segs[1] and sFlag:
                 excessTail = segs[1]-(numWords-e) #how many words in the next caption to keep
                 endIdx = idx
                 sFlag = 0
                 break
-        
+
         startTime = transcript[startIdx]["start"] + excessHead/wpm
-        endTime = min(transcript[endIdx]["start"] + transcript[endIdx]["duration"], 
+        endTime = min(transcript[endIdx]["start"] + transcript[endIdx]["duration"],
                       transcript[endIdx]["start"] + excessTail/wpm)
         sponsorTimestamps.append((round(startTime,3),round(endTime,3)))
-    return sponsorTimestamps, sponsorText
+
+    if returnText:
+        return sponsorTimestamps, sponsorText
+    else:
+        return sponsorTimestamps

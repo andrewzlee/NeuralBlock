@@ -5,9 +5,7 @@ from flask import Flask, render_template, request
 
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
-from youtube_transcript_api import YouTubeTranscriptApi
 import json
-import re
 import algorithms.process_predictions as pp
 
 app = Flask(__name__)
@@ -24,19 +22,11 @@ def home():
 @app.route("/predict", methods = ["POST","GET"])
 def predict():
     vid = request.form["vid"]
-    transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
-    
-    chars = "(!|\"|#|\$|%|&|\(|\)|\*|\+|,|-|\.|/|:|;\<|=|>|\?|@|\[|\\\\|\]|\^|_|`|\{|\||\}|~|\t|\n)+"
-    captionCount = []
-    full_text = ""
-    for t in transcript:
-        cleaned_text = re.sub("  +", " ", re.sub(chars, " ", t["text"])).strip()
-        captionCount.append(len(cleaned_text.split(" ")))
-        full_text = full_text + " " + cleaned_text
-    full_text = full_text.strip()
+
+    transcript, full_text, captionCount = pp.processVideo(vid)
     predictions, status = pp.getPredictions(model,tokenizer,full_text)
     if status:
-        sponsorTimestamps,sponsorText = pp.getTimestamps(transcript, captionCount, predictions[0], full_text.split(" "))
+        sponsorTimestamps,sponsorText = pp.getTimestamps(transcript, captionCount, predictions[0], full_text.split(" "), 1)
         minuteStamps = []
         for t in sponsorTimestamps:
             m1,s1 = divmod(round(t[0]),60)
@@ -47,7 +37,7 @@ def predict():
         sponsorText = []
         minuteStamps = []
 
-    return render_template("predict.html", videoid = vid, transcript_text = full_text, 
+    return render_template("predict.html", videoid = vid, transcript_text = full_text,
                            timestamp = " ".join(str(e) for e in sponsorTimestamps),
                            minutestamp = " ".join(minuteStamps),
                            sponsTexts = sponsorText)
