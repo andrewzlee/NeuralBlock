@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
@@ -41,6 +41,14 @@ def predict():
                            timestamp = " ".join(str(e) for e in sponsorTimestamps),
                            minutestamp = " ".join(minuteStamps),
                            sponsTexts = sponsorText)
+
+@app.route("/api/getSponsorSegments")
+def getSponsorSegments():
+    vid = request.args["vid"]
+    transcript, full_text, captionCount = pp.processVideo(vid)
+    predictions, status = pp.getPredictions(model,tokenizer,full_text)
+    sponsorTimestamps = pp.getTimestamps(transcript, captionCount, predictions[0], full_text.split(" "))
+    return jsonify(sponsorSegments=sponsorTimestamps)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=False)
