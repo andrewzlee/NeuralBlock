@@ -1,33 +1,38 @@
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
 <head>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 	<title>NeuralBlock</title>
-	Welcome to the NeuralBlock project page!
 </head>
+<!doctype html>
 
 <body>
-	<p>
-		<a href="/">Return</a>
-		<br>
-		Transcript for {{ videoid }}:
-		<br>
-		<br>
-		{{ transcript_text }}
-		<br>
-		<br>
-		Predicted timestamps:
-		<br>
-		Seconds: {{ timestamp }}
-		<br>
-		Minutes: {{ minutestamp }}
-		<br>
-		<br>
-		{% for para in sponsTexts %}
-			<p>Sponsorship:: {{para}}</p>
-		{% endfor %}
-	</p>
+	<header id="main-header"><h1>NeuralBlock</h1></header>
+	<div class="container">
+		<p>
+			<a href="/">Return</a>
+			<br>
+			Transcript for {{ videoid }}:
+			<br>
+			{{ transcript_text }}
+			<br>
+			<br>
+			Predicted timestamps:
+			<br>
+			Seconds: {{ timestamp }}
+			<br>
+			Minutes: {{ minutestamp }}
+			<br>
+			<br>
+			<ul>
+				{% for para in sponsTexts %}
+					<li>{{para}}</li>
+				{% endfor %}
+			</ul>
+
+		</p>
+	</div>
 </body>
 </html>

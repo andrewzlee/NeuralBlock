@@ -1,3 +1,32 @@
 body {
 	font-family: sans-serif;
+	color:#555555;
+	line-height: 1.5em;
+}
+
+a {
+	text-decoration: none;
+	color: #555555;
+	font-weight: bold;
+}
+
+a:hover {
+	color:red;
+}
+
+.container{
+	width: 90%;
+	margin: auto;
+}
+
+.button {
+	padding: 5px 10px;
+	border: none;
+	border-radius: 3px;
+	font-size: 16;
+}
+
+.button:hover {
+	background:red;
+	color:white;
 }

@@ -1,23 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
 <head>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 	<title>NeuralBlock</title>
-	Welcome to the NeuralBlock project page!
 </head>
 
 <body>
-	<p>
-	Submit a video id and see where the sponsorships are. 
-	</p>
-	<p>
-	<form action="{{ url_for('predict') }}" method="post">
-		<label for="vid">Video ID:</label>
-		<input type="text" id="vid" name="vid"><br><br>
-		<input type="submit" value="Submit">
-	</form>
-	</p>
+	<div class="container">
+		<h1>Welcome to the project page of NeuralBlock</h1>
+		<p>
+			NeuralBlock is a neural network built using Keras/Tensorflow that detects in-video YouTube sponsorships. You can find the project on Github <a href="https://github.com/andrewzlee/NeuralBlock" target="_blank">here</a>.
+		</p>
+		<p>
+			<h2>Demo</h2>
+			Submit a video id and see where the sponsorships are. <br>
+			Example: https://www.youtube.com/watch?v=<strong>QqEuO5im1nA</strong>
+			<form action="{{ url_for('predict') }}" method="POST">
+				<div>
+					<label for="vid">Video ID:</label>
+					<input type="text" name="vid">
+					<input class="button" type="submit" value="Submit">
+				</div>
+			</form>
+		</p>
+		<p>
+			Examples:<br>
+			Real Life Lore: k8_SbVg5Ris<br>
+			Half As Interesting: QqEuO5im1nA <br>
+			More to come... Testing
+		</p>
+	</div>
 </body>
 </html>
