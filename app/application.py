@@ -33,7 +33,7 @@ def predict():
         m2,s2 = divmod(round(t[1]),60)
         minuteStamps.append(f"({m1}:{str(s1).zfill(2)},{m2}:{str(s2).zfill(2)})")
 
-    return render_template("predict.html", videoid = vid, transcript_text = full_text,
+    return render_template("predict.html", videoid = vid, transcript_text = transcript,
                            timestamp = " ".join(str(e) for e in sponsorTimestamps),
                            minutestamp = " ".join(minuteStamps),
                            sponsTexts = sponsorText)

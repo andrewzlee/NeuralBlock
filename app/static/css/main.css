@@ -14,9 +14,33 @@ a:hover {
 	color:red;
 }
 
+p {
+	margin: 8px;
+}
+
+h4 {
+	margin: 10px 0px;
+}
+
 .container{
-	width: 90%;
+	width: 75%;
 	margin: auto;
+}
+
+#transcript{
+	float: left;
+	width: 60%;
+	padding: 10px;
+	box-sizing: border-box;
+	overflow: scroll;
+}
+
+#results{
+
+	float: left;
+	width: 40%;
+	padding: 10px
+	box-sizing: border-box;
 }
 
 .button {
