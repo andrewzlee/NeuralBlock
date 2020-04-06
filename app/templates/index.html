@@ -8,29 +8,36 @@
 </head>
 
 <body>
+	<header id="main-header"><h1>NeuralBlock</h1></header>
 	<div class="container">
-		<h1>Welcome to the project page of NeuralBlock</h1>
-		<p>
-			NeuralBlock is a neural network built using Keras/Tensorflow that detects in-video YouTube sponsorships. You can find the project on Github <a href="https://github.com/andrewzlee/NeuralBlock" target="_blank">here</a>.
-		</p>
-		<p>
-			<h2>Demo</h2>
-			Submit a video id and see where the sponsorships are. <br>
+		<h2>Welcome!</h2>
+		This is the project page for NeuralBlock (NB), a neural network built using Keras/Tensorflow that detects in-video YouTube sponsorships. You can find the project on Github <a href="https://github.com/andrewzlee/NeuralBlock" target="_blank">here</a>. Additionally, this web application provides an API to <a href="https://github.com/ajayyy/SponsorBlock">SponsorBlock</a>, whom supplied crowd-sourced sponsor labels that allowed NB to be trained.
+		<hr>
+		<div class="left-panel">
+			<h4>Demo</h4>
+			Submit a video ID and see where the sponsorships are. For true predictions, submit videos published after March 3, 2020.<br>
 			Example: https://www.youtube.com/watch?v=<strong>QqEuO5im1nA</strong>
 			<form action="{{ url_for('predict') }}" method="POST">
-				<div>
-					<label for="vid">Video ID:</label>
-					<input type="text" name="vid">
-					<input class="button" type="submit" value="Submit">
-				</div>
+				<label for="vid">Video ID:</label>
+				<input type="text" name="vid">
+				<input class="button" type="submit" value="Submit">
 			</form>
-		</p>
-		<p>
-			Examples:<br>
-			Real Life Lore: k8_SbVg5Ris<br>
-			Half As Interesting: QqEuO5im1nA <br>
-			More to come... Testing
-		</p>
+		</div>
+		
+		<div class="right-panel">
+			<h4>Examples:</h4>
+			<table>
+				<tr><th><strong>Channel</strong></th><th><strong>Video ID</strong></th></tr>
+				<tr><th>Real Life Lore</th><th>k8_SbVg5Ris</th></tr>
+				<tr><th>Half As Interesting</th><th>QqEuO5im1nA</th></tr>
+				<tr><th>Linus Tech Tips</th><th>B821HqH-dWI</th></tr>
+			</table>
+		</div>
+		<footer>
+			This project was created by <a href="https://www.linkedin.com/in/andrewzlee/" target="_blank">Andrew Lee</a>. <br>
+			If you have any questions, suggestions, or comments <br>
+			email me at leezandrew @ gmail (dot) com.
+		<footer>
 	</div>
 </body>
 </html>

@@ -27,6 +27,41 @@ h4 {
 	margin: auto;
 }
 
+.left-panel{
+	float: left;
+	width: 60%;
+	padding-right: 15px;
+	box-sizing: border-box;
+}
+
+.right-panel{
+	float: left;
+	width: 40%;
+	box-sizing: border-box;
+}
+
+hr{
+	margin-block-start:1em;
+	margin-block-end:1em;
+}
+
+table{
+	border-spacing: 0px;
+	width: 100%;
+}
+
+th,td{
+	padding: 0px;
+	font-weight: normal;
+	text-align: left;
+}
+
+footer{
+	text-align: center;
+	font-size: small;
+	margin-top: 250px;
+}
+
 #transcript{
 	float: left;
 	width: 60%;
@@ -36,7 +71,6 @@ h4 {
 }
 
 #results{
-
 	float: left;
 	width: 40%;
 	padding: 10px
