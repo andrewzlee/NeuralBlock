@@ -16,9 +16,10 @@ Some examples of NB's predictions are provided in the `examples/` directory. A w
 The `app/` directory contains a simple flask application that performs the primary functions of `predict_stream.py` and `predict_timestamps.py`, and presents the results in the broswer.
 
 1. Install flask and other necessary libraries.
-2. Run `python app.py` from a terminal.
-3. Go to `localhost:5000` in a broswer.
-4. Submit a valid video ID and click Submit
+2. Move the models from the `data` folder into `app/models`. There should be no subfolders.
+3. Run `python app/application.py` from a terminal.
+4. Go to `localhost:5000` in a broswer.
+5. Submit a valid video ID and click Submit
 
 The results should return in a few seconds. Note, if a good transcript cannot be extracted by YouTubeTranscriptApi, the app will fail.
 
