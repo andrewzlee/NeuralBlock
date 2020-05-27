@@ -2,19 +2,27 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
 import numpy as np
+import ds_stt as stt
 
-def processVideo(vid):
-    #Reliance on YouTubeTranscriptApi will eventually be eliminated
-    transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
+def processVideo(vid, useDS = False):
+    
+    #Use DeepSpeech or YoutubeTranscriptApi to get transcript
+    if useDS:
+        stt.yt_download(vid)
+        transcript, fullText = stt.transcribe(vid + ".wav")
+        captionCount = [1] * len(transcript)
+        
+    else:
+        transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
 
-    chars = "(!|\"|#|\$|%|&|\(|\)|\*|\+|,|-|\.|/|:|;\<|=|>|\?|@|\[|\\\\|\]|\^|_|`|\{|\||\}|~|\t|\n)+"
-    captionCount = []
-    fullText = ""
-    for t in transcript:
-        cleaned_text = re.sub("  +", " ", re.sub(chars, " ", t["text"])).strip()
-        captionCount.append(len(cleaned_text.split(" "))) #num words in the caption
-        fullText = fullText + " " + cleaned_text
-    fullText = fullText.strip()
+        chars = "(!|\"|#|\$|%|&|\(|\)|\*|\+|,|-|\.|/|:|;\<|=|>|\?|@|\[|\\\\|\]|\^|_|`|\{|\||\}|~|\t|\n)+"
+        captionCount = []
+        fullText = ""
+        for t in transcript:
+            cleaned_text = re.sub("  +", " ", re.sub(chars, " ", t["text"])).strip()
+            captionCount.append(len(cleaned_text.split(" "))) #num words in the caption
+            fullText = fullText + " " + cleaned_text
+        fullText = fullText.strip()
 
     return transcript, fullText, captionCount
 
