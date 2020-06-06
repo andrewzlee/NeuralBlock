@@ -49,10 +49,10 @@ def extractText(b, transcript, widen = 0.1):
         
         text = t["text"].split()
         numWords = len(text)
-        totalNumWords += numWords
         
         #Store a wider range for the labeled text
         if (b[0] - widen) <= tEnd and tStart <= (b[1] + widen):
+            totalNumWords += numWords
             excessHead = round((b[0]-tStart)*wps) #how many seconds can we cut out?
             excessTail = round((b[1]-tStart)*wps) #how many words to keep?
             
