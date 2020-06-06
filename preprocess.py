@@ -56,10 +56,10 @@ def extractSponsor(conn_src, conn_dest, vid, verbose = False):
         for b in best:
             segLength = b[1] - b[0]
             lenThreshold = 7
-            if segLength/60 > lenThreshold: #only check sponsors >8 minutes to verify it's legitimate since it's computationally expensive
+            if segLength/60 > lenThreshold: #only check sponsors >7 minutes to verify it's legitimate since it's computationally expensive
                 print(f"Sponsor in ({vid}) is longer than {lenThreshold} minutes. Checking to make sure it's okay.")
                 totalLength = pafy.new(f"https://www.youtube.com/watch?v={vid}").length
-                if segLength/totalLength >= 0.4: #ignore "sponsors" that are longer than 40% of the video
+                if segLength/totalLength >= 0.45: #ignore "sponsors" that are longer than 45% of the video
                     if verbose:
                         print(f"({vid}) has {round(segLength/60,2)} min sponsor out of a total {round(totalLength,2)} min video.")
                     cursor_dest.execute(f"insert into sponsordata values ('{vid}', {b[0]}, {b[1]}, {b[2]}, null , -1)")
@@ -69,10 +69,10 @@ def extractSponsor(conn_src, conn_dest, vid, verbose = False):
             for t in transcript:
                 tStart = t["start"]
                 tEnd = tStart + t["duration"]
-                #Checks to see if there is any text
+                #Check narrower range to see if there is any text
                 if (b[0] + shrink) <= tEnd and tStart <= (b[1] - shrink):
                     txtCheck = txtCheck + t["text"].replace("\n"," ") + " "
-                #widen the labeled range    
+                #Store a wider range for the labeled text
                 if (b[0] - widen) <= tEnd and tStart <= (b[1] + widen):
                     string = string + t["text"].replace("\n"," ") + " "
             if txtCheck == "":
