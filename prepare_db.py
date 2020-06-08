@@ -22,9 +22,11 @@ def createSponsor():
             "videoID"       TEXT NOT NULL,
             "startTime"     REAL NOT NULL,
             "endTime"       REAL NOT NULL,
-            "votes" INTEGER NOT NULL,
-            "text" BLOB,
-            "processed" INTEGER NOT NULL
+            "text"          BLOB,
+            "sponsor"       INTEGER NOT NULL,
+            "autogen"       INTEGER,
+            "filledin"      INTEGER,
+            "processed"     INTEGER NOT NULL
     )
     """
     cursor.execute(query)
