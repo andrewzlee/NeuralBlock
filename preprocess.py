@@ -111,7 +111,7 @@ def extractSponsor(conn_src, conn_dest, vid, best, transcript, verbose = False):
         conn_dest.commit()
         return
 
-def extractRandom(conn_dest, best, transcript, verbose = False):
+def extractRandom(conn_dest, vid, best, transcript, verbose = False):
     #We're going to extract a random text excerpt from the transcript that
     #has the same length as our sponsored segments.
     cursor_dest = conn_dest.cursor()
@@ -173,47 +173,70 @@ def extractRandom(conn_dest, best, transcript, verbose = False):
         conn_dest.commit()
     return 
 
-def labelVideo(conn_dest, vid, transcript, filledin, verbose = False):
+def getWordCount(text):
+    #Use tokenizer to be consistent with training method
+    tokenizer = Tokenizer()
+    tokenizer.fit_on_texts([text])
+    text = tokenizer.texts_to_sequences([text])
+    return len(text[0])
+
+def appendData(full_text, seq, text, tStart, tEnd, best, verbose = False):
+    full_text += re.sub(" +", " ", text) + " "
+    numWords = getWordCount(text)
     
-    try:
-        if filledin:
-            #merge in autogen text and label them 1s
-            print("todo")
+    inSponsor = False
+    fuzziness = 0.100
+    for b in best:
+        if (b[0] - fuzziness) <= tEnd and tStart <= (b[1] + fuzziness):
+            inSponsor = True
+    
+    if inSponsor:
+        seq += [1] * len(numWords)
+        if verbose:
+            print(text)
+    else: 
+        seq += [0] * len(numWords)
         
-        cursor = conn_dest.cursor()
-        #we can use the labeled data computed previously to extract the information we need
-        cursor.execute(f"select starttime, endtime, text from sponsordata where processed = 1 and videoid = '{vid}'")
-        results = cursor.fetchall()
+    return full_text, seq
+
+
+def labelVideo(conn_dest, vid, best, transcript, filledin, verbose = False):
+    try:
+        
+        if filledin:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
+            auto = transcript_list.find_generated_transcript(["en"])
+            transcript_auto = auto.fetch()
         
         #Stitch together the transcript into a single string
         #Use the tokenized string to label each word as sponsor or not
-        fuzziness = 0.1
         seq = []
         full_text = ""
         for t in transcript:
-            #Use tokenizer to be consistent with training method
-            tokenizer = Tokenizer()
-            raw_text = t["text"].replace("\n"," ")
-            raw_text = re.sub(" +", " ", raw_text.replace(r"\u200b", " ")) #strip out this unicode
-            full_text += raw_text + " "
-            tokenizer.fit_on_texts([raw_text])
-            text = tokenizer.texts_to_sequences([raw_text])
-            inSponsor = False
             tStart = t["start"]
             tEnd = tStart + t["duration"]
-            for r in results:
-                if (r[0] - fuzziness) <= tEnd and tStart <= (r[1] + fuzziness):
-                    inSponsor = True
             
-            if inSponsor:
-                seq += [1] * len(text[0])
-                if verbose:
-                    print(raw_text)
-            else: 
-                seq += [0] * len(text[0])
+            if filledin:
+                for b in best:
+                    if b[0] <= tStart:
+                        string, totalNumWords = extractText(b, transcript_auto) 
+                        full_text, seq = appendData(full_text, seq, string, tStart, tEnd, best)
+            
+            raw_text = t["text"].replace("\n"," ")
+            raw_text = re.sub(" +", " ", raw_text.replace(r"\u200b", " ")) #strip out this unicode
+            full_text, seq = appendData(full_text, seq, raw_text, tStart, tEnd, best)
+        
+        for b in best:
+            if b[0] > transcript[-1]["start"]:
+                tStart = transcript[-1]["start"]
+                tEnd = tStart + transcript[-1]["duration"]
+                string, totalNumWords = extractText(b, transcript_auto) 
+                full_text, seq = appendData(full_text, seq, string, tStart , tEnd, best)
+        
         full_text = re.sub(" +", " ", full_text).replace("'", "''") #format text
         
         #insert text and labels into db
+        cursor = conn_dest.cursor()
         cursor.execute(f"insert into SponsorStream values ('{vid}', '{full_text}' , '{seq}')")
         conn_dest.commit()
         
@@ -264,6 +287,9 @@ if __name__ == "__main__":
                 for b in best:
                     cursor_dest = conn_dest.cursor()
                     cursor_dest.execute(f"insert into sponsordata values ('{vid}', {b[0]}, {b[1]}, null, 1, null, null, 0)")
+            
+            if i == 3:
+                break;
                 
         ##################################################################
         

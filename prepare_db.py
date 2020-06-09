@@ -34,22 +34,6 @@ def createSponsor():
     conn.close()
     return
 
-def createRandom():
-    conn = sqlite3.connect("data\labeled.db")
-    cursor = conn.cursor()
-    query2 = """
-    CREATE TABLE "RandomData" (
-            "videoID"       TEXT NOT NULL,
-            "startTime"     REAL NOT NULL,
-            "endTime"       REAL NOT NULL,
-            "text" BLOB
-    )
-    """
-    cursor.execute(query2)
-    conn.commit()
-    conn.close()
-    return
-
 def createStream():
     conn = sqlite3.connect("data/labeled.db")
     cursor = conn.cursor()
@@ -75,9 +59,9 @@ def truncateTable(table):
     return
 
 
-truncateTable("sponsordata")
-truncateTable("randomdata")
-truncateTable("sponsorstream")
+# truncateTable("sponsordata")
+# truncateTable("randomdata")
+# truncateTable("sponsorstream")
 #createSponsor()
 #createRandom()
 #createStream()
