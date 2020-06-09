@@ -260,7 +260,7 @@ if __name__ == "__main__":
         cursor_src.execute("select distinct videoid from sponsortimes where votes > 1")
         videoList = cursor_src.fetchall()
         
-        #Extracts the text for a sponsor segment and labels it 1 (sponsor)
+        #Build the datasets for normal inference and streaming inference.
         i = 0
         for vid in videoList:
             i += 1
@@ -290,22 +290,6 @@ if __name__ == "__main__":
             
             if i == 3:
                 break;
-                
-        ##################################################################
-        
-        #Labels the sponsored segments for the whole video. It uses some of the 
-        #data computed above to save time mainly.
-        cur = conn_dest.cursor()
-        cur.execute("select distinct videoid from sponsordata where processed = 1")
-        videoList = cur.fetchall()
-        i = 0
-        for vid in videoList:
-            i+=1
-            if i % 500 == 0:
-                print("Video ({}) {} of {}".format(vid[0], i,len(videoList)))
-                labelVideo(conn_dest, vid[0], verbose = True)
-            else:
-                labelVideo(conn_dest, vid[0])
                 
     except:
         traceback.print_exc()
