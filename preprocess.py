@@ -67,6 +67,7 @@ def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
     cursor_dest = conn_dest.cursor()
     count = cursor_dest.execute(f"select count(*) from sponsordata where videoid = '{vid}'").fetchone()[0]
     if count > 0: #ignore if already in the db
+        print("Already been lableled.")
         return
     
     #Check to see if the text even matches... overlapping text xEIt4OojA3Y
@@ -103,6 +104,7 @@ def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
         #vid, text, sponsorship, autogen, filledin, processed/skipped
         cursor_dest.execute(f"insert into sponsordata values ('{vid}', {b[0]}, {b[1]}, '{string}', 1, {autogen}, {filledIn}, 1)")
         conn_dest.commit()
+        print(filledIn)
     return filledIn
 
 def extractRandom(conn_dest, vid, best, transcript, autogen, verbose):
@@ -170,13 +172,13 @@ def getWordCount(text):
     #Use tokenizer to be consistent with training method
     tokenizer = Tokenizer()
     tokenizer.fit_on_texts([text])
-    text = tokenizer.texts_to_sequences([text])
-    return len(text[0])
+    text_seq = tokenizer.texts_to_sequences([text])
+    return len(text_seq[0])
 
-def appendData(full_text, seq, text, tStart, tEnd, best, verbose = False):
+def appendData(full_text, seq, text, tStart, tEnd, best, verbose):
+    #This needs to be more accurate. Use extractText logic.
     full_text += re.sub(" +", " ", text) + " "
     numWords = getWordCount(text)
-    
     inSponsor = False
     fuzziness = 0.100
     for b in best:
@@ -184,17 +186,18 @@ def appendData(full_text, seq, text, tStart, tEnd, best, verbose = False):
             inSponsor = True
     
     if inSponsor:
-        seq += [1] * len(numWords)
+        seq += [1] * numWords
         if verbose:
             print(text)
-    else: 
-        seq += [0] * len(numWords)
+    else:
+        seq += [0] * numWords
         
     return full_text, seq
 
 
-def labelVideo(conn_dest, vid, best, transcript, autogen, filledIn, verbose):
+def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
     if filledIn: #Must have been manual transcript, so we need the autogen
+        print("in filled")
         transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
         transcript_auto = transcript_list.find_generated_transcript(["en"]).fetch()
     
@@ -218,7 +221,7 @@ def labelVideo(conn_dest, vid, best, transcript, autogen, filledIn, verbose):
         
         raw_text = t["text"].replace("\n"," ")
         raw_text = re.sub(" +", " ", raw_text.replace(r"\u200b", " ")) #strip out this unicode
-        full_text, seq = appendData(full_text, seq, raw_text, tStart, tEnd, best)
+        full_text, seq = appendData(full_text, seq, raw_text, tStart, tEnd, best, verbose)
     
     for b in best:
         if b[0] > transcript[-1]["start"]:
@@ -230,25 +233,15 @@ def labelVideo(conn_dest, vid, best, transcript, autogen, filledIn, verbose):
     full_text = re.sub(" +", " ", full_text).replace("'", "''") #format text
     
     #insert text and labels into db
-    print(full_text)
-    print(seq)
     cursor = conn_dest.cursor()
     cursor.execute(f"insert into SponsorStream values ('{vid}', '{full_text}' , '{seq}', {autogen}, {filledIn}, 1)")
     conn_dest.commit()
         
     return 
 
-########
-#Warning: Do not run this whole script at once. Each part was built independently
-#and was run at different points in time. Specifically, the labelVideo() function
-#pulls from sponsordata to create its own data.
-
 def labelData(conn_dest, vid, best, transcript, useAutogen, verbose):
     filledIn = extractSponsor(conn_dest, vid, best, transcript, useAutogen, verbose)
-    print("=================================================================")
-    extractRandom(conn_dest, vid, best, transcript, useAutogen, verbose)
-    print("=================================================================")
-    print("STARTING STREAM")
+    #extractRandom(conn_dest, vid, best, transcript, useAutogen, verbose)
     labelVideo(conn_dest, vid, best, transcript, filledIn, useAutogen, verbose)
     
     return
@@ -308,14 +301,16 @@ if __name__ == "__main__":
             except:
                 print("No transcripts whatsoever.")
                 insertBlanks(conn_dest, cursor_dest, best)
-            break
     except:
         traceback.print_exc()
     finally:
-        # cursor_dest = conn_dest.cursor()
+        cursor_dest = conn_dest.cursor()
         # r = cursor_dest.execute("select * from sponsordata").fetchall()
         # for res in r:
         #     print(res)
+        r = cursor_dest.execute("select * from sponsorstream").fetchall()
+        for res in r:
+            print(res)
         print("Connection closed")
         conn_src.close()
         conn_dest.close()
