@@ -68,7 +68,7 @@ def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
     count = cursor_dest.execute(f"select count(*) from sponsordata where videoid = '{vid}'").fetchone()[0]
     if count > 0: #ignore if already in the db
         print("Already been lableled.")
-        return
+        return -1
     
     #Check to see if the text even matches... overlapping text xEIt4OojA3Y
 
@@ -175,20 +175,42 @@ def getWordCount(text):
     text_seq = tokenizer.texts_to_sequences([text])
     return len(text_seq[0])
 
-def appendData(full_text, seq, text, tStart, tEnd, best, verbose):
-    #This needs to be more accurate. Use extractText logic.
+def appendData(full_text, seq, text, tStart, tEnd, best, autogen, verbose):
     full_text += re.sub(" +", " ", text) + " "
     numWords = getWordCount(text)
     inSponsor = False
-    fuzziness = 0.100
+    fuzziness = 0.200 #200ms
     for b in best:
         if (b[0] - fuzziness) <= tEnd and tStart <= (b[1] + fuzziness):
             inSponsor = True
+            # sponsorTimes = (b[0] - fuzziness, (b[1] + fuzziness))
     
-    if inSponsor:
-        seq += [1] * numWords
+    if inSponsor or autogen:
+        # Attempt to find a more accurate start and stop point for labeling.
+        # Wasn't successful so we'll have to stick with extra text 
+        # at the start and end ¯\_(ツ)_/¯
+        
+        # wps = 2.3
+        # excessHead = round((sponsorTimes[0]-tStart)*wps) #how many words can we cut out?
+        # excessTail = round((tEnd - sponsorTimes[1])*wps) #how many words to keep?
+        # startLoc = min(max(excessHead,0), numWords) #2 word buffer
+        # #theoretical words - actual words
+        # silentWords = round((tEnd-tStart)*wps) - numWords
+        # endLoc = max(excessTail-silentWords, 0)
+        
+        # seq += [0] * startLoc
+        # seq += [1] * (numWords-startLoc)#-endLoc)
+        # seq += [0] * endLoc
+        
+        seq += [1] * numWords 
+        
         if verbose:
+            # words = text.split()
+            # string = words[startLoc:]#(numWords-endLoc)]
+            # if len(string) > 0: 
+            #     print(" ".join(string))
             print(text)
+            
     else:
         seq += [0] * numWords
         
@@ -197,7 +219,6 @@ def appendData(full_text, seq, text, tStart, tEnd, best, verbose):
 
 def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
     if filledIn: #Must have been manual transcript, so we need the autogen
-        print("in filled")
         transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
         transcript_auto = transcript_list.find_generated_transcript(["en"]).fetch()
     
@@ -205,25 +226,28 @@ def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
     #Use the tokenized string to label each word as sponsor or not
     seq = []
     full_text = ""
+    segList = best.copy()
     for t in transcript:
         tStart = t["start"]
         tEnd = tStart + t["duration"]
         
+        
         if filledIn:
-            for b in best:
+            for b in segList:
                 #Potential bug: techinically, if 2 or more segments occur
                 #before the tStart then they'll be added in the order
                 #they appear in best. This shouldn't really be an issue
                 #because two or more sponsors should not be back to back.
                 if b[0] <= tStart:
                     string, totalNumWords = extractText(b, transcript_auto) 
-                    full_text, seq = appendData(full_text, seq, string, tStart, tEnd, best)
+                    full_text, seq = appendData(full_text, seq, string, tStart, tEnd, best, 1, verbose)
+                    segList.remove((b[0],b[1],b[2]))
         
         raw_text = t["text"].replace("\n"," ")
         raw_text = re.sub(" +", " ", raw_text.replace(r"\u200b", " ")) #strip out this unicode
-        full_text, seq = appendData(full_text, seq, raw_text, tStart, tEnd, best, verbose)
+        full_text, seq = appendData(full_text, seq, raw_text, tStart, tEnd, best, 0, verbose)
     
-    for b in best:
+    for b in segList:
         if b[0] > transcript[-1]["start"]:
             tStart = transcript[-1]["start"]
             tEnd = tStart + transcript[-1]["duration"]
@@ -241,9 +265,12 @@ def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
 
 def labelData(conn_dest, vid, best, transcript, useAutogen, verbose):
     filledIn = extractSponsor(conn_dest, vid, best, transcript, useAutogen, verbose)
-    #extractRandom(conn_dest, vid, best, transcript, useAutogen, verbose)
-    labelVideo(conn_dest, vid, best, transcript, filledIn, useAutogen, verbose)
-    
+    #filledIn = 1
+    if filledIn != -1:
+        extractRandom(conn_dest, vid, best, transcript, useAutogen, verbose)
+        if verbose:
+            print("========================")
+        labelVideo(conn_dest, vid, best, transcript, filledIn, useAutogen, verbose)
     return
 
 def insertBlanks(conn_dest, cursor_dest, best):
@@ -261,18 +288,21 @@ if __name__ == "__main__":
         conn_dest = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
         cursor_dest = conn_dest.cursor()
         
-        #cursor_src = conn_src.cursor()
-        #cursor_src.execute("select distinct videoid from sponsortimes where votes > 1")
-        #videoList = cursor_src.fetchall()
+        cursor_src = conn_src.cursor()
+        cursor_src.execute("select distinct videoid from sponsortimes where votes > 1")
+        videoList = cursor_src.fetchall()
         # LTT, Geo, HAI
-        videoList = [["DdzwSM3HAuA"],["xEIt4OojA3Y"], ["f2g7TbQihsw"]]
+        #videoList = [["xEIt4OojA3Y"]]#[["DdzwSM3HAuA"], ["xEIt4OojA3Y"], ["b00j2aCT6Ug"]]
         
         #Build the datasets for normal inference and streaming inference.
         i = 0
         for vid in videoList:
             i += 1
+            if i == 20:
+                print("Exiting early.")
+                break
             #Print to console every 500 videos. 
-            if i % 1 == 0:
+            if i % 10 == 0:
                 print("Video ({}) {} of {}".format(vid[0], i,len(videoList)))
                 verbose = True
             else:
@@ -288,7 +318,7 @@ if __name__ == "__main__":
                     labelData(conn_dest, vid[0], best, transcript_manual, 
                               useAutogen, verbose)
                 except:
-                    print("No English manual transcript.")
+                    print("No English manual.")
                     try:
                         useAutogen = 1
                         transcript_auto = transcript_list.find_generated_transcript(["en"]).fetch()
@@ -305,9 +335,9 @@ if __name__ == "__main__":
         traceback.print_exc()
     finally:
         cursor_dest = conn_dest.cursor()
-        # r = cursor_dest.execute("select * from sponsordata").fetchall()
-        # for res in r:
-        #     print(res)
+        r = cursor_dest.execute("select * from sponsordata where sponsor = 1 and processed = 1").fetchall()
+        for res in r:
+            print(res)
         r = cursor_dest.execute("select * from sponsorstream").fetchall()
         for res in r:
             print(res)

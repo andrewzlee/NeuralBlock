@@ -41,7 +41,10 @@ def createStream():
     CREATE TABLE "SponsorStream" (
             "videoID"       TEXT NOT NULL,
             "text" BLOB,
-            "sponsorLabel" BLOB
+            "sponsorLabel" BLOB,
+            "autogen"       INTEGER,
+            "filledin"      INTEGER,
+            "processed"     INTEGER NOT NULL
     )
     """
     cursor.execute(query)
@@ -59,9 +62,7 @@ def truncateTable(table):
     return
 
 
-# truncateTable("sponsordata")
-# truncateTable("randomdata")
-# truncateTable("sponsorstream")
-#createSponsor()
-#createRandom()
-#createStream()
+truncateTable("sponsordata")
+truncateTable("sponsorstream")
+# createSponsor()
+# createStream()
