@@ -6,7 +6,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 import re
 import traceback
 
-def findBestSegments(cursor_src, vid, verbose = False):
+def findBestSegments(cursor_src, vid, verbose):
     cursor_src.execute(f"select videoid, starttime, endtime, votes from sponsortimes where videoid = '{vid}' and votes > 1 order by votes desc")
 
     sponsors = []
@@ -104,7 +104,6 @@ def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
         #vid, text, sponsorship, autogen, filledin, processed/skipped
         cursor_dest.execute(f"insert into sponsordata values ('{vid}', {b[0]}, {b[1]}, '{string}', 1, {autogen}, {filledIn}, 1)")
         conn_dest.commit()
-        print(filledIn)
     return filledIn
 
 def extractRandom(conn_dest, vid, best, transcript, autogen, verbose):
@@ -231,7 +230,6 @@ def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
         tStart = t["start"]
         tEnd = tStart + t["duration"]
         
-        
         if filledIn:
             for b in segList:
                 #Potential bug: techinically, if 2 or more segments occur
@@ -252,7 +250,7 @@ def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
             tStart = transcript[-1]["start"]
             tEnd = tStart + transcript[-1]["duration"]
             string, totalNumWords = extractText(b, transcript_auto) 
-            full_text, seq = appendData(full_text, seq, string, tStart , tEnd, best)
+            full_text, seq = appendData(full_text, seq, string, tStart , tEnd, best, 1, verbose)
     
     full_text = re.sub(" +", " ", full_text).replace("'", "''") #format text
     
@@ -284,8 +282,8 @@ def insertBlanks(conn_dest, cursor_dest, best):
 
 if __name__ == "__main__":
     try:
-        conn_src = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\database.db")
-        conn_dest = sqlite3.connect(r"C:\Users\Andrew\Documents\NeuralBlock\data\labeled.db")
+        conn_src = sqlite3.connect(r"./data/database.db")
+        conn_dest = sqlite3.connect(r"./data/labeled.db")
         cursor_dest = conn_dest.cursor()
         
         cursor_src = conn_src.cursor()
@@ -293,7 +291,7 @@ if __name__ == "__main__":
         videoList = cursor_src.fetchall()
         # LTT, Geo, HAI
         #videoList = [["xEIt4OojA3Y"]]#[["DdzwSM3HAuA"], ["xEIt4OojA3Y"], ["b00j2aCT6Ug"]]
-        
+        #videoList = [["--6T95cQa50"]]
         #Build the datasets for normal inference and streaming inference.
         i = 0
         for vid in videoList:
@@ -318,14 +316,14 @@ if __name__ == "__main__":
                     labelData(conn_dest, vid[0], best, transcript_manual, 
                               useAutogen, verbose)
                 except:
-                    print("No English manual.")
+                    print("No English MANUAL.")
                     try:
                         useAutogen = 1
                         transcript_auto = transcript_list.find_generated_transcript(["en"]).fetch()
                         labelData(conn_dest, vid[0], best, transcript_auto, 
                                   useAutogen, verbose)
                     except:
-                        print("No English autogen")
+                        print("No English AUTOGEN")
                         insertBlanks(conn_dest, cursor_dest, best)
                             
             except:
