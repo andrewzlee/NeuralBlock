@@ -164,7 +164,7 @@ def extractRandom(conn_dest, vid, best, transcript, autogen, verbose):
                 resampleCounter += 1
                 #If the segment length is causing an infinte loop resample
                 segment = max(3, round(random.uniform(0.5,2.0) * (b[1]-b[0]),2))
-                print(f"Resampling attempt {resampleCounter} of 20 on {vid[0]}")
+                print(f"Resampling attempt {resampleCounter} of 20 on {vid}")
                 if resampleCounter == 20:
                     print("Resampled 20 times. Moving on...")
                     skip = True
@@ -291,9 +291,9 @@ def labelData(conn_dest, vid, best, transcript, useAutogen, verbose):
         labelVideo(conn_dest, vid, best, transcript, filledIn, useAutogen, False)
     return status
 
-def insertBlanks(conn_dest, cursor_dest, best):
+def insertBlanks(conn_dest, cursor_dest, best, vid):
     for b in best:
         #print(f"Video {vid} could not have its transcript extracted.") #No transcripts available or not English.
-        cursor_dest.execute(f"insert into sponsordata values ('{vid[0]}', {b[0]}, {b[1]}, null, 1, null, null, 0)")
+        cursor_dest.execute(f"insert into sponsordata values ('{vid}', {b[0]}, {b[1]}, null, 1, null, null, 0)")
         conn_dest.commit()
     return

@@ -1,5 +1,5 @@
 import sqlite3
-#import random
+import random
 from youtube_transcript_api import YouTubeTranscriptApi
 import preprocess_helper as preprocess
 import traceback
@@ -10,6 +10,7 @@ def main():
     #     1 Read from database.db and pull all videos 
     #     2 Read from labeled.db and pull only unprocessed
     mode = 2
+    
     try:
         conn_src = sqlite3.connect(r"./data/database.db")
         conn_dest = sqlite3.connect(r"./data/labeled.db")
@@ -38,9 +39,9 @@ def main():
         for vid in videoList:
             
             if mode == 2:
-                cursor_dest.execute(f"delete from sponsordata where videoid = '{vid}'")
-                cursor_dest.execute(f"delete from sponsorstream where videoid = '{vid}'")
-                cursor_dest.commit()
+                cursor_dest.execute(f"delete from sponsordata where videoid = '{vid[0]}'")
+                cursor_dest.execute(f"delete from sponsorstream where videoid = '{vid[0]}'")
+                conn_dest.commit()
             
             #Print to console every 500 videos. 
             if i % 100 == 0:
@@ -74,11 +75,11 @@ def main():
                             skipCount += 1
                     except:
                         skipCount += 1
-                        preprocess.insertBlanks(conn_dest, cursor_dest, best)
+                        preprocess.insertBlanks(conn_dest, cursor_dest, best, vid[0])
                             
             except:
                 skipCount += 1
-                preprocess.insertBlanks(conn_dest, cursor_dest, best)
+                preprocess.insertBlanks(conn_dest, cursor_dest, best, vid[0])
             
             #Check to make sure labelData isn't being called more than
             #once per video.
