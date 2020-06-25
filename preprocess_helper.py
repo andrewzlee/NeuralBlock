@@ -170,7 +170,7 @@ def extractRandom(conn_dest, vid, best, transcript, autogen, verbose):
                     skip = True
                     break
         if not skip:
-            selected_segments.append((start_point, end_point,segment))
+            selected_segments.append((start_point, end_point, segment))
             start_used.append(start_point)
     
     #Simplified version of extractText()
@@ -186,7 +186,7 @@ def extractRandom(conn_dest, vid, best, transcript, autogen, verbose):
         
         string = string.replace("'", "''")
         cursor_dest = conn_dest.cursor()
-        cursor_dest.execute(f"insert into sponsordata values ('{vid}', {start_point}, {end_point}, '{string}', 0, {autogen}, null, 1)")
+        cursor_dest.execute(f"insert into sponsordata values ('{vid}', {sel[0]}, {sel[1]}, '{string}', 0, {autogen}, null, 1)")
         conn_dest.commit()
     return 
 
