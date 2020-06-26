@@ -33,6 +33,8 @@ def findBestSegments(cursor_src, vid, verbose):
                 group.append(j[1])
                 dealtWithSimilarSponsors.append(j)
         best.append(max(set(group), key = lambda item:item[2]))
+    
+    best.sort()
     if verbose:
             print(best)
     return best
@@ -70,7 +72,7 @@ def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
     count = cursor_dest.execute(f"select count(*) from sponsordata where videoid = '{vid}'").fetchone()[0]
     if count > 0: #ignore if already in the db
         print(f"Already been lableled ({vid}).")
-        #return 0
+        return 0
     
     #Check to see if the text even matches... overlapping text xEIt4OojA3Y
 
@@ -240,6 +242,7 @@ def appendData(full_text, seq, text, tStart, tEnd, best, autogen, verbose):
 
 
 def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
+    print(f"filled in status is: {filledIn}")
     if filledIn: #Must have been manual transcript, so we need the autogen
         transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
         transcript_auto = transcript_list.find_generated_transcript(["en"]).fetch()
@@ -255,10 +258,6 @@ def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
         
         if filledIn:
             for b in segList:
-                #Potential bug: techinically, if 2 or more segments occur
-                #before the tStart then they'll be added in the order
-                #they appear in best. This shouldn't really be an issue
-                #because two or more sponsors should not be back to back.
                 if b[0] <= tStart:
                     string, totalNumWords = extractText(b, transcript_auto) 
                     full_text, seq = appendData(full_text, seq, string, tStart, tEnd, best, 1, verbose)
@@ -268,13 +267,14 @@ def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
         raw_text = re.sub(" +", " ", raw_text.replace(r"\u200b", " ")) #strip out this unicode
         full_text, seq = appendData(full_text, seq, raw_text, tStart, tEnd, best, 0, verbose)
     
-    for b in segList:
-        if b[0] > transcript[-1]["start"]:
-            tStart = transcript[-1]["start"]
-            tEnd = tStart + transcript[-1]["duration"]
-            string, totalNumWords = extractText(b, transcript_auto) 
-            full_text, seq = appendData(full_text, seq, string, tStart , tEnd, best, 1, verbose)
-    
+    if filledIn:
+        for b in segList:
+            if b[0] > transcript[-1]["start"]:
+                tStart = transcript[-1]["start"]
+                tEnd = tStart + transcript[-1]["duration"]
+                string, totalNumWords = extractText(b, transcript_auto) 
+                full_text, seq = appendData(full_text, seq, string, tStart , tEnd, best, 1, verbose)
+        
     full_text = re.sub(" +", " ", full_text).replace("'", "''") #format text
     
     #insert text and labels into db
