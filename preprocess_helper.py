@@ -242,7 +242,6 @@ def appendData(full_text, seq, text, tStart, tEnd, best, autogen, verbose):
 
 
 def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
-    print(f"filled in status is: {filledIn}")
     if filledIn: #Must have been manual transcript, so we need the autogen
         transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
         transcript_auto = transcript_list.find_generated_transcript(["en"]).fetch()
@@ -252,6 +251,7 @@ def labelVideo(conn_dest, vid, best, transcript, filledIn, autogen, verbose):
     seq = []
     full_text = ""
     segList = best.copy()
+    
     for t in transcript:
         tStart = t["start"]
         tEnd = tStart + t["duration"]

@@ -10,7 +10,7 @@ def main():
     #     1 Read from database.db and pull all videos 
     #     2 Read from labeled.db and pull only unprocessed
     #     3 Subtract labeled.db from database.db to pull newly labeled videos
-    mode = 2
+    mode = 1
     
     try:
         conn_src = sqlite3.connect(r"./data/database.db")
@@ -26,7 +26,7 @@ def main():
             videoList = cursor_dest.fetchall()
         else: #Mode 3
             cursor_src = conn_src.cursor()
-            cursor_src.execute("select distinct videoid from sponsortimes where votes > 1 limit 10" )
+            cursor_src.execute("select distinct videoid from sponsortimes where votes > 1" )
             db_list = cursor_src.fetchall()
             
             cursor_dest.execute("select distinct videoid from sponsordata")
@@ -92,9 +92,7 @@ def main():
             
             #Check to make sure labelData isn't being called more than
             #once per video.
-            if i != (manCount + autoCount + skipCount):
-                print("VideoID {}: {}".format(i,vid))
-                raise Exception("Count mismatch.")
+            assert i == (manCount + autoCount + skipCount), "Count mismatch for VideoID {}: {}".format(i,vid)
             i += 1
     except:
         traceback.print_exc()
