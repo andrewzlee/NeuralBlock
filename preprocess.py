@@ -9,22 +9,31 @@ def main():
     # Modes:
     #     1 Read from database.db and pull all videos 
     #     2 Read from labeled.db and pull only unprocessed
+    #     3 Subtract labeled.db from database.db to pull newly labeled videos
     mode = 2
     
     try:
         conn_src = sqlite3.connect(r"./data/database.db")
         conn_dest = sqlite3.connect(r"./data/labeled.db")
-        cursor_dest = conn_dest.cursor()        
+        cursor_dest = conn_dest.cursor()
         
         if mode == 1:
-            query = "select distinct videoid from sponsortimes where votes > 1" 
             cursor_src = conn_src.cursor()
-            cursor_src.execute(query)
+            cursor_src.execute("select distinct videoid from sponsortimes where votes > 1" )
             videoList = cursor_src.fetchall()
-        else:
-            query = "select distinct videoid from sponsordata where processed = 0"
-            cursor_dest.execute(query)
+        elif mode ==  2:
+            cursor_dest.execute("select distinct videoid from sponsordata where processed = 0")
             videoList = cursor_dest.fetchall()
+        else: #Mode 3
+            cursor_src = conn_src.cursor()
+            cursor_src.execute("select distinct videoid from sponsortimes where votes > 1 limit 10" )
+            db_list = cursor_src.fetchall()
+            
+            cursor_dest.execute("select distinct videoid from sponsordata")
+            lb_list = cursor_dest.fetchall()
+            #Subtract processed videos out to find new videos
+            videoList = list(set(db_list) - set(lb_list))
+            
         
         # LTT, Geo, HAI
         #videoList = [["xEIt4OojA3Y"]]#[["DdzwSM3HAuA"], ["xEIt4OojA3Y"], ["b00j2aCT6Ug"]]
