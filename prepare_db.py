@@ -26,7 +26,8 @@ def createSponsor():
             "sponsor"       INTEGER NOT NULL,
             "autogen"       INTEGER,
             "filledin"      INTEGER,
-            "processed"     INTEGER NOT NULL
+            "processed"     INTEGER NOT NULL,
+            "dateprocessed" DATE NOT NULL
     )
     """
     cursor.execute(query)
@@ -44,7 +45,8 @@ def createStream():
             "sponsorLabel" BLOB,
             "autogen"       INTEGER,
             "filledin"      INTEGER,
-            "processed"     INTEGER NOT NULL
+            "processed"     INTEGER NOT NULL,
+            "dateprocessed" DATE NOT NULL
     )
     """
     cursor.execute(query)
@@ -62,7 +64,7 @@ def truncateTable(table):
     return
 
 
-truncateTable("sponsordata")
-truncateTable("sponsorstream")
-# createSponsor()
-# createStream()
+#truncateTable("sponsordata")
+#truncateTable("sponsorstream")
+createSponsor()
+createStream()
