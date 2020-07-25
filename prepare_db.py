@@ -22,28 +22,15 @@ def createSponsor():
             "videoID"       TEXT NOT NULL,
             "startTime"     REAL NOT NULL,
             "endTime"       REAL NOT NULL,
-            "votes" INTEGER NOT NULL,
-            "text" BLOB,
-            "processed" INTEGER NOT NULL
+            "text"          BLOB,
+            "sponsor"       INTEGER NOT NULL,
+            "autogen"       INTEGER,
+            "filledin"      INTEGER,
+            "processed"     INTEGER NOT NULL,
+            "dateprocessed" DATE NOT NULL
     )
     """
     cursor.execute(query)
-    conn.commit()
-    conn.close()
-    return
-
-def createRandom():
-    conn = sqlite3.connect("data\labeled.db")
-    cursor = conn.cursor()
-    query2 = """
-    CREATE TABLE "RandomData" (
-            "videoID"       TEXT NOT NULL,
-            "startTime"     REAL NOT NULL,
-            "endTime"       REAL NOT NULL,
-            "text" BLOB
-    )
-    """
-    cursor.execute(query2)
     conn.commit()
     conn.close()
     return
@@ -55,7 +42,11 @@ def createStream():
     CREATE TABLE "SponsorStream" (
             "videoID"       TEXT NOT NULL,
             "text" BLOB,
-            "sponsorLabel" BLOB
+            "sponsorLabel" BLOB,
+            "autogen"       INTEGER,
+            "filledin"      INTEGER,
+            "processed"     INTEGER NOT NULL,
+            "dateprocessed" DATE NOT NULL
     )
     """
     cursor.execute(query)
@@ -73,9 +64,7 @@ def truncateTable(table):
     return
 
 
-truncateTable("sponsordata")
-truncateTable("randomdata")
-truncateTable("sponsorstream")
-#createSponsor()
-#createRandom()
-#createStream()
+#truncateTable("sponsordata")
+#truncateTable("sponsorstream")
+createSponsor()
+createStream()
