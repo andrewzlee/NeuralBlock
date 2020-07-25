@@ -75,7 +75,8 @@ def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
         return 0
     
     #Check to see if the text even matches... overlapping text xEIt4OojA3Y
-
+    filledIn = 0
+    
     #Map the time stamps to text
     for b in best:
         segLength = b[1] - b[0]
@@ -92,7 +93,6 @@ def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
         
         string,totalNumWords = extractText(b,transcript)
         
-        filledIn = 0
         #When a segment has less than the usual words, use the autogen
         #if avaiable. If already using autogen, just check to see if it's
         #silence or un-transcribe-able and fail if true. Otherwise, let it 

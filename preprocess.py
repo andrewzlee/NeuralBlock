@@ -19,14 +19,14 @@ def main():
         
         if mode == 1:
             cursor_src = conn_src.cursor()
-            cursor_src.execute("select distinct videoid from sponsortimes where votes > 1" )
+            cursor_src.execute("select distinct videoid from sponsortimes where votes > 1 and category = 'sponsor'" )
             videoList = cursor_src.fetchall()
         elif mode ==  2:
             cursor_dest.execute("select distinct videoid from sponsordata where processed = 0")
             videoList = cursor_dest.fetchall()
         else: #Mode 3
             cursor_src = conn_src.cursor()
-            cursor_src.execute("select distinct videoid from sponsortimes where votes > 1" )
+            cursor_src.execute("select distinct videoid from sponsortimes where votes > 1 and category = 'sponsor'" )
             db_list = cursor_src.fetchall()
             
             cursor_dest.execute("select distinct videoid from sponsordata")
