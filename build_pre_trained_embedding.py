@@ -24,7 +24,7 @@ EMBEDDING_DIM = 300 #word embedding length
 embeddings_index = load_vectors("./data/embeddings/wiki-news-300d-1M.vec")
 
 #Get Tokenizer from train_stream
-with open("./data/tokenizer_stream_10k.json") as f:
+with open("./data/spot_tokenizer_10k.json") as f:
     json_obj = json.load(f)
     tokenizer = tokenizer_from_json(json_obj)
 
