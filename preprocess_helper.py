@@ -6,7 +6,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 import re
 
 def findBestSegments(cursor_src, vid, verbose):
-    cursor_src.execute(f"select videoid, starttime, endtime, votes from sponsortimes where videoid = '{vid}' and category = 'sponsor' and votes > 0 order by votes desc")
+    cursor_src.execute(f"select videoid, starttime, endtime, votes from sponsortimes where videoid = '{vid}' and category = 'sponsor' and votes >= 0 order by votes desc")
 
     sponsors = []
     for i in cursor_src.fetchall():
