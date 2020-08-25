@@ -62,7 +62,7 @@ def extractText(b, transcript, widen = 0.150):
             endLoc = min(excessTail, numWords)
             string = string + " ".join(clean_txt[startLoc:endLoc]) + " "
             
-    return string, totalNumWords
+    return string, len(string.split())
 
 def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
     status = 1
