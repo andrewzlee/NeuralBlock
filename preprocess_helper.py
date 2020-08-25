@@ -112,7 +112,7 @@ def extractSponsor(conn_dest, vid, best, transcript, autogen, verbose):
                     cursor_dest.execute(f"insert into sponsordata values ('{vid[0]}', {b[0]}, {b[1]}, null, 1, null, null, 0, current_date)")
                     status = 0
                     continue
-            elif totalNumWords < segLength*0.75: #if autogen is mostly silent
+            elif totalNumWords < expWords*0.75: #if autogen is mostly silent
                 print(f"Autogen for ({vid}) has too few words.")
                 cursor_dest.execute(f"insert into sponsordata values ('{vid[0]}', {b[0]}, {b[1]}, null, 1, null, null, 0, current_date)")
                 status = 0
