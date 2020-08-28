@@ -2,16 +2,66 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
 import numpy as np
-import ds_stt as stt
+import pandas as pd
+#import ds_stt as stt
 
-def processVideo(vid, useDS = False):
-    
+#Copied from preprocess.py
+def extractText(b, transcript, widen = 0.150):
+    wps = 2.3
+    totalNumWords = 0
+    string = ""
+
+    for t in transcript:
+        tStart = t["start"]
+        tEnd = tStart + t["duration"]
+
+        text = t["text"].split()
+        numWords = len(text)
+
+        #Store a wider range for the labeled text
+        if (b[0] - widen) <= tEnd and tStart <= (b[1] + widen):
+            totalNumWords += numWords
+            excessHead = round((b[0]-tStart)*wps) #how many seconds can we cut out?
+            excessTail = round((b[1]-tStart)*wps) #how many words to keep?
+
+            clean_txt = t["text"].replace("\n"," ").split()
+            startLoc = max(excessHead,0)
+            endLoc = min(excessTail, numWords)
+            string = string + " ".join(clean_txt[startLoc:endLoc]) + " "
+
+    return string, len(string.split())
+
+def getPredictionsSpot(model,tokenizer,vid,segments):
+    transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
+
+    text = []
+    for seg in segments:
+        string,totalNumWords = extractText(seg,transcript, widen = 0.05)
+
+        expWords = (seg[1]-seg[0])*2.3
+        if totalNumWords < expWords*0.65:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
+            auto = transcript_list.find_generated_transcript(["en"])
+            transcript_auto = auto.fetch()
+            string, totalNumWords = extractText(seg, transcript_auto, widen = 0.05)
+
+        text.append(string)
+
+    data = pd.DataFrame({"text":text})
+    x_new = tokenizer.texts_to_sequences(data["text"].values)
+    x_new = pad_sequences(x_new, padding = "post", maxlen = 3000, truncating = "post")
+
+    return model.predict(x_new, batch_size = 1)[:,1].tolist() #P(Sponsor|text)
+
+def processVideoStream(vid, useDS = False):
+
     #Use DeepSpeech or YoutubeTranscriptApi to get transcript
     if useDS:
-        stt.yt_download(vid)
-        transcript, fullText = stt.transcribe(vid + ".wav")
-        captionCount = [1] * len(transcript)
-        
+        #stt.yt_download(vid)
+        #transcript, fullText = stt.transcribe(vid + ".wav")
+        #captionCount = [1] * len(transcript)
+        print("DS is not ready yet.")
+
     else:
         transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
 
@@ -26,7 +76,7 @@ def processVideo(vid, useDS = False):
 
     return transcript, fullText, captionCount
 
-def getPredictions(model,tokenizer,text):
+def getPredictionsStream(model,tokenizer,text):
     full_seq = tokenizer.texts_to_sequences([text])
     numWords = len(full_seq[0])
     print("Sequence length: {}".format(numWords))
@@ -48,17 +98,17 @@ def getPredictions(model,tokenizer,text):
 
         #Iterate through the splits
         for i in prediction:
-            overlapRegion = np.empty([0,2], dtype = np.float32) 
+            overlapRegion = np.empty([0,2], dtype = np.float32)
             #First n words in the split, which overlaps with the last n words of the previous split
-            overlapHead = i[0:overlap] 
+            overlapHead = i[0:overlap]
 
             for j in range(len(overlapTail)): #First split is skipped because len = 0
                 maxValue = max(overlapHead[j][1],overlapTail[j][1]) #Should be the same numbers, but grabbing max just in case
                 np.append(overlapRegion,(1-maxValue, maxValue))
 
             full_prediction = np.concatenate((full_prediction,i[:-overlap],overlapRegion))
-            overlapTail = i[(maxNumWords-overlap):] #Extract tail n words for next iteration    
-        
+            overlapTail = i[(maxNumWords-overlap):] #Extract tail n words for next iteration
+
         return full_prediction
 
 def splitSeq(seq, numWords, maxNumWords, overlap):
@@ -82,7 +132,7 @@ def splitSeq(seq, numWords, maxNumWords, overlap):
 
     return X_trimmed
 
-def getTimestamps(transcript, captionCount, predictions, words, returnText = 0):
+def getTimestampsStream(transcript, captionCount, predictions, words, returnText = 0):
     sponsorSegments = []
     startIdx = 0
     #Minimum confidence to start Sponsor
