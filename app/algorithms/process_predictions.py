@@ -36,7 +36,15 @@ def getPredictionsSpot(model,tokenizer,vid,segments):
 
     text = []
     for seg in segments:
-        string = extractText(seg,transcript, widen = 0.05)[0]
+        string,totalNumWords = extractText(seg,transcript, widen = 0.05)
+
+        expWords = (seg[1]-seg[0])*2.3
+        if totalNumWords < expWords*0.65:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
+            auto = transcript_list.find_generated_transcript(["en"])
+            transcript_auto = auto.fetch()
+            string, totalNumWords = extractText(seg, transcript_auto, widen = 0.05)
+
         text.append(string)
 
     data = pd.DataFrame({"text":text})
