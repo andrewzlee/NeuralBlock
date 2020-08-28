@@ -2,6 +2,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
 import numpy as np
+import pandas as pd
 #import ds_stt as stt
 
 #Copied from preprocess.py
@@ -30,7 +31,21 @@ def extractText(b, transcript, widen = 0.150):
 
     return string, len(string.split())
 
-def processVideo(vid, useDS = False):
+def getPredictionsSpot(model,tokenizer,vid,segments):
+    transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
+
+    text = []
+    for seg in segments:
+        string = extractText(seg,transcript, widen = 0.05)[0]
+        text.append(string)
+
+    data = pd.DataFrame({"text":text})
+    x_new = tokenizer.texts_to_sequences(data["text"].values)
+    x_new = pad_sequences(x_new, padding = "post", maxlen = 3000, truncating = "post")
+
+    return model.predict(x_new, batch_size = 1)[:,1].tolist() #P(Sponsor|text)
+
+def processVideoStream(vid, useDS = False):
 
     #Use DeepSpeech or YoutubeTranscriptApi to get transcript
     if useDS:
@@ -53,7 +68,7 @@ def processVideo(vid, useDS = False):
 
     return transcript, fullText, captionCount
 
-def getPredictions(model,tokenizer,text):
+def getPredictionsStream(model,tokenizer,text):
     full_seq = tokenizer.texts_to_sequences([text])
     numWords = len(full_seq[0])
     print("Sequence length: {}".format(numWords))
@@ -109,7 +124,7 @@ def splitSeq(seq, numWords, maxNumWords, overlap):
 
     return X_trimmed
 
-def getTimestamps(transcript, captionCount, predictions, words, returnText = 0):
+def getTimestampsStream(transcript, captionCount, predictions, words, returnText = 0):
     sponsorSegments = []
     startIdx = 0
     #Minimum confidence to start Sponsor
