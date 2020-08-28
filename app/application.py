@@ -54,8 +54,16 @@ def getSponsorSegments():
 
 @app.route("/api/checkSponsorSegments")
 def checkSponsorSegments():
-    vid = "46gNvDLgLdI"#request.args["vid"]
-    segments = [(28,41),(208,210),(942,977)]#request.args["segments"]
+    vid = request.args["vid"] #46gNvDLgLdI
+    #"28,41;208,210;942,977"
+    segments_raw = request.args["segments"].split(";")
+    #Parse string into (start,end) pairs
+    segments = []
+    for s in segments_raw:
+        ts = s.split(",")
+        seg = (float(ts[0]),float(ts[1]))
+        segments.append(seg)
+    
     predictions = pp.getPredictionsSpot(model_spot,tokenizer_spot,vid,segments)
     return jsonify(probabilities=predictions)
 
