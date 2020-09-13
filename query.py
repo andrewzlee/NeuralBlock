@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+#Misc queries to check data
+
 import sqlite3
 import random
 
@@ -24,6 +26,6 @@ res = cursor_dest.fetchall()
 
 for r in res:
     print(r)
-    
+
 conn_src.close()
 conn_dest.close()

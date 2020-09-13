@@ -1,5 +1,7 @@
 import sqlite3
 
+#Queries to create prepare DBs. Used before preprocess.py
+
 """
 CREATE TABLE "sponsorTimes" (
         "videoID"       TEXT NOT NULL,
