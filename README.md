@@ -1,9 +1,9 @@
 # NeuralBlock
-NeuralBlock (NB) is a neural network built using Keras/Tensorflow that detects in-video YouTube sponsorships. There is support for both predicting [1] whether or not a text excerpt is a sponsorship (spot) or [2] whether or not this word in the sequence is part of a sponsorship.
+NeuralBlock (NB) is a neural network built using Keras/Tensorflow that detects in-video YouTube sponsorships. There is support for both predicting (1) whether or not a text excerpt is a sponsorship (spot) or (2) whether or not this word in the sequence is part of a sponsorship.
 
 NB is loosely based on and inspired by this [project](https://github.com/Sponsoff/sponsorship_remover). Unlike the aforementioned project, this project leverages the crowd-sourced labels provided by [SponsorBlock](https://github.com/ajayyy/SponsorBlock).
 
-Some examples of NB's predictions are provided in the `examples/` directory. The code for the (web application)[ai.neuralblock.app] is also provided. can also be run locally for a more hands-on experience.
+Some examples of NB's predictions are provided in the `examples/` directory. The code for the (web application)[https://ai.neuralblock.app] is also provided. can also be run locally for a more hands-on experience.
 
 ## High Level Summary
 1. NeuralBlock extracts transcripts from YouTube with (YouTubeTranscriptApi)[https://pypi.org/project/youtube-transcript-api/].
@@ -14,6 +14,7 @@ Some examples of NB's predictions are provided in the `examples/` directory. The
 
 ## Using the Web App
 **Somewhat outdated. To be updated later. Dockerfile can be used**
+
 The `app/` directory contains a simple flask application that performs the primary functions of `predict_stream.py` and `predict_timestamps.py`, and presents the results in the browser.
 
 1. Install flask and other necessary libraries.
