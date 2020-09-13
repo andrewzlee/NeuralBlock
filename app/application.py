@@ -10,10 +10,16 @@ import algorithms.process_predictions as pp
 
 app = Flask(__name__)
 
-model = load_model("./models/nb_stream_fasttext_10k.h5")
+model_stream = load_model("./models/nb_stream_fasttext_10k.h5")
+model_spot = load_model("./models/nb_spot.h5")
+
 with open("./models/tokenizer_stream_10k.json") as f:
     json_obj = json.load(f)
-    tokenizer = tokenizer_from_json(json_obj)
+    tokenizer_stream = tokenizer_from_json(json_obj)
+
+with open("./models/tokenizer_spot_10k.json") as f:
+    json_obj = json.load(f)
+    tokenizer_spot = tokenizer_from_json(json_obj)
 
 @app.route("/")
 def home():
@@ -23,10 +29,10 @@ def home():
 def predict():
     vid = request.form["vid"]
 
-    transcript, full_text, captionCount = pp.processVideo(vid)
-    predictions = pp.getPredictions(model,tokenizer,full_text)
+    transcript, full_text, captionCount = pp.processVideoStream(vid)
+    predictions = pp.getPredictionsStream(model_stream,tokenizer_stream,full_text)
 
-    sponsorTimestamps,sponsorText = pp.getTimestamps(transcript, captionCount, predictions, full_text.split(" "), 1)
+    sponsorTimestamps,sponsorText = pp.getTimestampsStream(transcript, captionCount, predictions, full_text.split(" "), 1)
     minuteStamps = []
     for t in sponsorTimestamps:
         m1,s1 = divmod(round(t[0]),60)
@@ -41,10 +47,25 @@ def predict():
 @app.route("/api/getSponsorSegments")
 def getSponsorSegments():
     vid = request.args["vid"]
-    transcript, full_text, captionCount = pp.processVideo(vid)
-    predictions = pp.getPredictions(model,tokenizer,full_text)
-    sponsorTimestamps = pp.getTimestamps(transcript, captionCount, predictions, full_text.split(" "))
+    transcript, full_text, captionCount = pp.processVideoStream(vid)
+    predictions = pp.getPredictionsStream(model_stream,tokenizer_stream,full_text)
+    sponsorTimestamps = pp.getTimestampsStream(transcript, captionCount, predictions, full_text.split(" "))
     return jsonify(sponsorSegments=sponsorTimestamps)
+
+@app.route("/api/checkSponsorSegments")
+def checkSponsorSegments():
+    vid = request.args["vid"] #46gNvDLgLdI
+    #"28,41;208,210;942,977"
+    segments_raw = request.args["segments"].split(";")
+    #Parse string into (start,end) pairs
+    segments = []
+    for s in segments_raw:
+        ts = s.split(",")
+        seg = (float(ts[0]),float(ts[1]))
+        segments.append(seg)
+    
+    predictions = pp.getPredictionsSpot(model_spot,tokenizer_spot,vid,segments)
+    return jsonify(probabilities=predictions)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=False)
