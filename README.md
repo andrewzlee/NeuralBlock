@@ -3,7 +3,7 @@ NeuralBlock (NB) is a neural network built using Keras/Tensorflow that detects i
 
 NB is loosely based on and inspired by this [project](https://github.com/Sponsoff/sponsorship_remover). Unlike the aforementioned project, this project leverages the crowd-sourced labels provided by [SponsorBlock](https://github.com/ajayyy/SponsorBlock).
 
-Some examples of NB's predictions are provided in the `examples/` directory. The code for the (web application)[https://ai.neuralblock.app] is also provided. can also be run locally for a more hands-on experience.
+Some examples of NB's predictions are provided in the `examples/` directory. The code for the [web application](https://ai.neuralblock.app) is also provided and can be run locally.
 
 ## High Level Summary
 1. NeuralBlock extracts transcripts from YouTube with (YouTubeTranscriptApi)[https://pypi.org/project/youtube-transcript-api/].
