@@ -32,26 +32,59 @@ def extractText(b, transcript, widen = 0.150):
     return string, len(string.split())
 
 def getPredictionsSpot(model,tokenizer,vid,segments):
-    transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
-
+    processed = []
     text = []
-    for seg in segments:
-        string,totalNumWords = extractText(seg,transcript, widen = 0.05)
+    try:
+        #Pull transcript list
+        transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
+        
+        for seg in segments:
+            expWords = (seg[1]-seg[0])*2.3
+            try:
+                #Pull manual transcript
+                transcript_manual = transcript_list.find_manually_created_transcript(["en","en-GB"]).fetch()
+                string,totalNumWords = extractText(seg, transcript_manual, widen = 0.05)
 
-        expWords = (seg[1]-seg[0])*2.3
-        if totalNumWords < expWords*0.65:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
-            auto = transcript_list.find_generated_transcript(["en"])
-            transcript_auto = auto.fetch()
-            string, totalNumWords = extractText(seg, transcript_auto, widen = 0.05)
+                if totalNumWords < expWords*0.65:
+                    raise("Too few words. Try autogen.")
+                else:
+                    text.append(string)
+                    processed.append(0)
+            except:
+                try:
+                    #Pull autogen if manual is too low or doesn't exist
+                    transcript_auto = transcript_list.find_generated_transcript(["en"]).fetch()
+                    string,totalNumWords = extractText(seg, transcript_auto, widen = 0.05)
+                    if totalNumWords < expWords*0.65:
+                        processed.append(1)
+                    else:
+                        text.append(string)
+                        processed.append(0)
+                except:
+                    # Video has no autogen
+                    return [1.0] * len(segments)
+    except:
+        # Video has no transcripts
+        return [1.0] * len(segments)
 
-        text.append(string)
+        #text.append(string)
+    if len(text) > 0:
+        data = pd.DataFrame({"text":text})
+        x_new = tokenizer.texts_to_sequences(data["text"].values)
+        x_new = pad_sequences(x_new, padding = "post", maxlen = 3000, truncating = "post")
 
-    data = pd.DataFrame({"text":text})
-    x_new = tokenizer.texts_to_sequences(data["text"].values)
-    x_new = pad_sequences(x_new, padding = "post", maxlen = 3000, truncating = "post")
+        nb_predictions = model.predict(x_new, batch_size = len(text))[:,1].tolist() #P(Sponsor|text)
 
-    return model.predict(x_new, batch_size = 1)[:,1].tolist() #P(Sponsor|text)
+    nbIdx = 0
+    predictions = []
+    for p in processed:
+        if p:
+            predictions.append(1.0)
+        else:
+            predictions.append(nb_predictions[nbIdx])
+            nbIdx += 1
+    return predictions
+
 
 def processVideoStream(vid, useDS = False):
 

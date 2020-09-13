@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 from flask import Flask, render_template, request, jsonify
 
@@ -63,7 +65,7 @@ def checkSponsorSegments():
         ts = s.split(",")
         seg = (float(ts[0]),float(ts[1]))
         segments.append(seg)
-    
+
     predictions = pp.getPredictionsSpot(model_spot,tokenizer_spot,vid,segments)
     return jsonify(probabilities=predictions)
 
