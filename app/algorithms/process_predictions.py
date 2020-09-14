@@ -21,12 +21,16 @@ def extractText(b, transcript, widen = 0.150):
         #Store a wider range for the labeled text
         if (b[0] - widen) <= tEnd and tStart <= (b[1] + widen):
             totalNumWords += numWords
-            excessHead = round((b[0]-tStart)*wps) #how many seconds can we cut out?
-            excessTail = round((b[1]-tStart)*wps) #how many words to keep?
+            excessHead = round((b[0]-tStart)*wps) #how many words can we trim from the start?
 
+            # NOTE, we don't do the same logic for excessTail because there's sometimes silence
+            # at the end and text stays on screen. This would mess up a b[1]-tEnd calculation
+            # by inflating the number of words we want to trim dramatically. 
+            excessTail = round((b[1]-tStart)*wps) #how many words to keep?
+            
             clean_txt = t["text"].replace("\n"," ").split()
             startLoc = max(excessHead,0)
-            endLoc = min(excessTail, numWords)
+            endLoc = min(startLoc + excessTail, numWords) #shift accordingly with startLoc
             string = string + " ".join(clean_txt[startLoc:endLoc]) + " "
 
     return string, len(string.split())
