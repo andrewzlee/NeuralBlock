@@ -59,4 +59,4 @@ data = pd.DataFrame({"text":text})
 x_new = tokenizer.texts_to_sequences(data["text"].values)
 x_new = pad_sequences(x_new, padding = "post", maxlen = 3000, truncating = "post")
 
-print(model.predict(x_new, batch_size = 1).round(3))
+print(model.predict(x_new, batch_size = len(text)).round(3))
