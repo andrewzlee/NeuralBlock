@@ -37,7 +37,7 @@ def getPredictionsSpot(model,tokenizer,vid,segments):
     try:
         #Pull transcript list
         transcript_list = YouTubeTranscriptApi.list_transcripts(vid)
-        
+
         for seg in segments:
             expWords = (seg[1]-seg[0])*2.3
             try:
@@ -62,10 +62,10 @@ def getPredictionsSpot(model,tokenizer,vid,segments):
                         processed.append(0)
                 except:
                     # Video has no autogen
-                    return [1.0] * len(segments)
+                    return [1.0] * len(segments) , 422
     except:
         # Video has no transcripts
-        return [1.0] * len(segments)
+        return [1.0] * len(segments), 422
 
         #text.append(string)
     if len(text) > 0:
@@ -83,7 +83,7 @@ def getPredictionsSpot(model,tokenizer,vid,segments):
         else:
             predictions.append(nb_predictions[nbIdx])
             nbIdx += 1
-    return predictions
+    return predictions, 200
 
 
 def processVideoStream(vid, useDS = False):

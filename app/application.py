@@ -66,8 +66,8 @@ def checkSponsorSegments():
         seg = (float(ts[0]),float(ts[1]))
         segments.append(seg)
 
-    predictions = pp.getPredictionsSpot(model_spot,tokenizer_spot,vid,segments)
-    return jsonify(probabilities=predictions)
+    predictions, status = pp.getPredictionsSpot(model_spot,tokenizer_spot,vid,segments)
+    return jsonify(probabilities=predictions), status
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=False)
