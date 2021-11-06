@@ -6,7 +6,7 @@ NB is loosely based on and inspired by this [project](https://github.com/Sponsof
 Some examples of NB's predictions are provided in the `examples/` directory. The code for the [web application](https://ai.neuralblock.app) is also provided and can be run locally.
 
 ## High Level Summary
-1. NeuralBlock extracts transcripts from YouTube with (YouTubeTranscriptApi)[https://pypi.org/project/youtube-transcript-api/].
+1. NeuralBlock extracts transcripts from YouTube with [YouTubeTranscriptApi](https://pypi.org/project/youtube-transcript-api/).
 2. The SponsorBlock community has already pre-labeled sponsors.
 3. The timestamps from (2) are used to find the sections in the transcript that are sponsorships, thereby creating a training set.
 4. The sequence of text is tokenized using the top 10,000 words found in sponsorships. Note, using a pre-trained word embedding by [fastText](https://fasttext.cc/) does not yield better performance.
@@ -32,6 +32,8 @@ The results should return in a few seconds. Note, if a good transcript cannot be
 3. Provide a video id (vid). The network was trained on the database as of 3/3/20. Use a video that was created after that date to ensure that the video hasn't already been seen.
 4. Run predict_stream.py
 5. Manually inspect the output stored in the variable `df` or `results`.
+
+Note, overusing YouTubeTranscriptApi can get your IP banned.
 
 ## Future Work
 1. **Better transcripts:** NeuralBlock depends on being able to download the full closed captioning. Some creators disallow auto-generated English captions, making it impossible for NB to predict on. The latter could be resolved through existing speech-to-text projects such as Mozilla's [DeepSpeech](https://github.com/mozilla/DeepSpeech).
