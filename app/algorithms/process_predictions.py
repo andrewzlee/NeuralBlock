@@ -55,6 +55,7 @@ def getPredictionsSpot(model,tokenizer,vid,segments):
                     text.append(string)
                     processed.append(0)
             except:
+                print("No manual")
                 try:
                     #Pull autogen if manual is too low or doesn't exist
                     transcript_auto = transcript_list.find_generated_transcript(["en"]).fetch()
@@ -65,10 +66,12 @@ def getPredictionsSpot(model,tokenizer,vid,segments):
                         text.append(string)
                         processed.append(0)
                 except:
+                    print("No autogen")
                     # Video has no autogen
                     return [1.0] * len(segments) , 422
     except:
         # Video has no transcripts
+        print("No transcripts")
         return [1.0] * len(segments), 422
 
         #text.append(string)

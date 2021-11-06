@@ -15,19 +15,20 @@ import random
 import app.algorithms.process_predictions as process #Custom script to extract data
 
 #Video ID to predict on
-vid = "46gNvDLgLdI"
+vid = "DRky8DlkKRU"
 
 model = load_model("./data/models/nb_spot.h5")
 with open("./data/spot_tokenizer_10k.json") as f:
     json_obj = json.load(f)
     tokenizer = tokenizer_from_json(json_obj)
 
-transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en"])
+transcript = YouTubeTranscriptApi.get_transcript(vid, languages = ["en", "en-GB"])
 segments = requests.get("https://sponsor.ajay.app/api/skipSegments",params={"videoID":vid}).json()
 
 #Sponsored Segments
 text = []
 for seg in segments:
+    print(seg)
     string = process.extractText(seg["segment"],transcript, widen = 0.05)[0]
     print("[SPONSOR]:: <<" + string + ">>")
     text.append(string)
