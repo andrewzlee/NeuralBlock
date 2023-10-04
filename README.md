@@ -5,6 +5,8 @@ NB is loosely based on and inspired by this [project](https://github.com/Sponsof
 
 Some examples of NB's predictions are provided in the `examples/` directory. The code for the [web application](https://ai.neuralblock.app) is also provided and can be run locally.
 
+A [video demo](https://youtu.be/WuP-UjGchV0) is available on YouTube.
+
 ## High Level Summary
 1. NeuralBlock extracts transcripts from YouTube with [YouTubeTranscriptApi](https://pypi.org/project/youtube-transcript-api/).
 2. The SponsorBlock community has already pre-labeled sponsors.
